@@ -1,6 +1,6 @@
 <script>
+    import { StrokeData } from "./StrokeData";
     import Bottombar from "./Bottombar.svelte";
-import Clear from "./Clear.svelte";
     import Mousedata from "./Mousedata.svelte";
     import Svg from "./Svg.svelte";
     import Touchdata from "./Touchdata.svelte";
@@ -12,17 +12,33 @@ import Clear from "./Clear.svelte";
     let touchData = {};
     let update = 0;
     let strokes = [];
-    let currentStroke = { color: null, points: [] };
-    $: { currentStroke.color = color }
+    // let currentStroke = { color: null, points: [], length: 0 };
+    let ID = 0;
+    $: { 
+        //currentStroke.color = color;
+        strokeData.color = color 
+    }
+    let strokeData = new StrokeData(ID++, color);
     let mouseIsDown = false;
     let touchIsDown = false;
+    function dist(P, Q) {
+        const dx = Q.x - P.x;
+        const dy = Q.y - P.y;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
     function addPoint(P) {
-        currentStroke.points.push(P);
+        /*const N = currentStroke.points.length;
+        if (N > 0)
+            currentStroke.length += dist(currentStroke.points[N - 1], P);
+        currentStroke.points.push(P);*/
+        strokeData.addPoint(P);
         update++;
     }
     function recordStroke() {
-        strokes.push(currentStroke);
-        currentStroke = { color: color, points: [] };
+        // strokes.push(currentStroke);
+        strokes.push(strokeData);
+        strokeData = new StrokeData(ID++, color);
+        //currentStroke = { color: color, points: [], length: 0 };
         update++;
     }
     // Detect mouse and touch events
@@ -70,7 +86,8 @@ import Clear from "./Clear.svelte";
         if (debugUpDown) {
             console.log(`touchend:\t${JSON.stringify(e)}`)
         }
-        if (currentStroke && touchIsDown) recordStroke(currentStroke);
+        // if (currentStroke && touchIsDown) recordStroke();
+        if (strokeData.count && touchIsDown) recordStroke();
         touchIsDown = false;
     }
     function recordMouse(e) {
@@ -101,11 +118,11 @@ import Clear from "./Clear.svelte";
         if (debugUpDown) {
             console.log(`mouseup:\t${JSON.stringify(e)}`)
         }
-        if (currentStroke) recordStroke(currentStroke);
+        // if (currentStroke) recordStroke();
+        if (strokeData.count) recordStroke();
     }
     function eventPoint(e) { return { x: e.clientX, y: e.clientY }; }
     function handleClear() {
-        console.log("Clear board");
         strokes = [];
         update = 0;
     }
@@ -125,7 +142,7 @@ import Clear from "./Clear.svelte";
     {/if}
     <Touchdata {touchData}></Touchdata>
 {/if}
-<Svg {strokes} {update} {currentStroke}></Svg>
+<Svg {strokes} {update} {strokeData}></Svg>
 <Bottombar bind:selectedColor={color} on:clear={handleClear}/>
 </div>
 

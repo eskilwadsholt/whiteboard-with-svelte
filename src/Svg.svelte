@@ -1,16 +1,26 @@
 <script>
+    import Dot from "./Dot.svelte";
     import SmoothStroke3 from "./SmoothStroke3.svelte";
+    import Stroke from "./Stroke.svelte";
     $: strokes = $$props.strokes;
     $: update = $$props.update;
-    $: currentStroke = $$props.currentStroke;
+    // $: currentStroke = $$props.currentStroke;
+    $: strokeData = $$props.strokeData;
+    const minStroke = 15; // Make at least 15 pixels long strokes
 </script>
 
 <svg>
     {#each strokes as stroke}
-        <SmoothStroke3 {stroke} {update}></SmoothStroke3>
+        {#if stroke.curveLength > minStroke}
+        <!--SmoothStroke3 {stroke} {update}></SmoothStroke3-->
+        <Stroke {stroke} {update}></Stroke>
+        {:else}
+        <Dot {stroke} {update}></Dot>
+        {/if}
     {/each}
-    {#if currentStroke.points.length}
-    <SmoothStroke3 stroke={currentStroke} update="current"></SmoothStroke3>
+    {#if strokeData.count}
+    <!--SmoothStroke3 stroke={strokeData.smoothPoints} update="current"></SmoothStroke3-->
+    <Stroke stroke={strokeData} update="current"></Stroke>
     {/if}
 </svg>
 

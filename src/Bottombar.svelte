@@ -1,7 +1,7 @@
 <script>
     import Clear from "./Clear.svelte";
-import ColorPicker from "./ColorPicker.svelte";
-    export let selectedColor = { name: "", code: ""};
+    import ColorPicker from "./ColorPicker.svelte";
+    export let selectedColor = $$props.selectedColor;
 </script>
 
 <div class="bottombar">

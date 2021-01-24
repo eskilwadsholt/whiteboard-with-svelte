@@ -9,7 +9,7 @@
         { name: "blue", code: "#00F" },
     ]
 
-    export let selected = colors[0];
+    export let selected = $$props.selected;
 </script>
 
 <div class="palette">
