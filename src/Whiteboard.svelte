@@ -12,10 +12,8 @@
     let touchData = {};
     let update = 0;
     let strokes = [];
-    // let currentStroke = { color: null, points: [], length: 0 };
     let ID = 0;
     $: { 
-        //currentStroke.color = color;
         strokeData.color = color 
     }
     let strokeData = new StrokeData(ID++, color);
@@ -27,18 +25,12 @@
         return Math.sqrt(dx * dx + dy * dy);
     }
     function addPoint(P) {
-        /*const N = currentStroke.points.length;
-        if (N > 0)
-            currentStroke.length += dist(currentStroke.points[N - 1], P);
-        currentStroke.points.push(P);*/
         strokeData.addPoint(P);
         update++;
     }
     function recordStroke() {
-        // strokes.push(currentStroke);
         strokes.push(strokeData);
         strokeData = new StrokeData(ID++, color);
-        //currentStroke = { color: color, points: [], length: 0 };
         update++;
     }
     // Detect mouse and touch events
@@ -154,11 +146,4 @@
         width: 100%;
         height: 100%;
     }
-    h1 {
-		color: #ff3e00;
-		text-transform: uppercase;
-		font-size: 2em;
-        font-weight: 100;
-        margin: 0;
-	}
 </style>

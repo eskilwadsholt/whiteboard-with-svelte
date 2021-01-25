@@ -1,6 +1,5 @@
 <script>
     import Dot from "./Dot.svelte";
-    import SmoothStroke3 from "./SmoothStroke3.svelte";
     import Stroke from "./Stroke.svelte";
     $: strokes = $$props.strokes;
     $: update = $$props.update;

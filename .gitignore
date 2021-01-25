@@ -1,4 +1,6 @@
 /node_modules/
 /public/build/
+/old_components/
+/old_scripts/
 
 .DS_Store

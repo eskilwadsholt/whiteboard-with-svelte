@@ -73,17 +73,22 @@ export class StrokeData {
         this.lastPoint = P;
     }
     smoothPoint(k) {
-        let Sx = 0;
+        let Sx = this.points[k].x;
         let St2x = 0;
-        let Sy = 0;
+        let Sy = this.points[k].y;
         let St2y = 0;
-        for (let i = - smoothing; i <= smoothing; i++) {
-            const xi = this.points[clamp(k + i, 0, this.count - 1)].x;
-            Sx += xi;
-            St2x += t2[i] * xi;
-            const yi = this.points[clamp(k + i, 0, this.count - 1)].y;
-            Sy += yi;
-            St2y += t2[i] * yi;
+        /* Combine x[k + i] and x[k - i] since they should be multiplied by
+        *  the same t and t^2
+        */
+        for (let i = 1; i <= smoothing; i++) {
+            const Pi = this.points[clamp(k + i, 0, this.count - 1)];
+            const Pminusi = this.points[clamp(k - i, 0, this.count - 1)];
+            const xs = Pi.x + Pminusi.x;
+            Sx += xs;
+            St2x += t2[i] * xs;
+            const ys = Pi.y + Pminusi.y;
+            Sy += ys;
+            St2y += t2[i] * ys;
         }
         // Compute symmetric quadratic regression for x(t) and y(t)
         const ax = (St2x - S11 * Sx / N) / S22;

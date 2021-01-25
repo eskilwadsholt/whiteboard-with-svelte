@@ -1,7 +1,7 @@
 <script>
     import { each } from "svelte/internal";
-    $: data = $$props.touchData;
-    $: touches = ("touches" in data) ? data.touches : [];
+    export let touchData;
+    $: touches = ("touches" in touchData) ? touchData.touches : [];
 </script>
 
 <div class="touchdata">
