@@ -1,85 +1,88 @@
 <script>
-    import { StrokeData } from "./StrokeData";
+    import { StrokeData, dist, clamp } from "./StrokeData";
     import Bottombar from "./Bottombar.svelte";
     import Mousedata from "./Mousedata.svelte";
     import Svg from "./Svg.svelte";
     import Touchdata from "./Touchdata.svelte";
     let color = { name: "white", code: "#FFF" };
-    const debugging = true;
-    const debugUpDown = false;
-    const debugMove = false;
+    const debugging = false;
     let mouseData = {};
     let touchData = {};
     let update = 0;
     let strokes = [];
     let ID = 0;
     $: { 
-        strokeData.color = color 
+        strokeData.color = color;
     }
     let strokeData = new StrokeData(ID++, color);
     let mouseIsDown = false;
     let touchIsDown = false;
-    function dist(P, Q) {
-        const dx = Q.x - P.x;
-        const dy = Q.y - P.y;
-        return Math.sqrt(dx * dx + dy * dy);
-    }
+    const maxZoom = 2;
+    const minZoom = 0.5;
+    let zoomFactor = 1;
+    let oldZoomFactor = 1;
+    let twoFingerDist = 0;
+    let twoFingerMidpoint = null;
+    let svgTopLeft = { left: 0, top: 0 };
     function addPoint(P) {
-        strokeData.addPoint(P);
+        strokeData.addPoint(screenToSVG(P));
         update++;
     }
     function recordStroke() {
-        strokes.push(strokeData);
-        strokeData = new StrokeData(ID++, color);
-        update++;
+        if (strokeData.count) {
+            strokes.push(strokeData);
+            strokeData = new StrokeData(ID++, color);
+            update++;
+        }
     }
     // Detect mouse and touch events
     function handleTouchStart(e) {
         e.preventDefault();
         touchData = e;
-        if (debugUpDown) {
-            Object.entries(e.touches).forEach(entry => {
-                const [i, touch] = entry;
-                console.log(`touchstart ${i}:\t${JSON.stringify(eventPoint(touch))}`);
-            });
-        }
-        if (e.touches.length > 1) { 
-            strokes.pop();
-            touchIsDown = false;
-            currentStroke = [];
-            update++;
-        }
-        else {
+        if (e.touches.length === 1) {
             touchIsDown = true;
             recordTouch(e);
+        } else if (e.touches.length === 2) {
+            touchIsDown = false;
+            const touch = e.touches[0];
+            const P = { x: touch.clientX, y: touch.clientY };
+            const touch2 = e.touches[1];
+            const Q = { x: touch2.clientX, y: touch2.clientY };
+            twoFingerDist = dist(P, Q);
+            twoFingerMidpoint = screenToSVG({ x: (P.x + Q.x) / 2, y: (P.y + Q.y) / 2 });
+            oldZoomFactor = zoomFactor;
         }
     }
     function recordTouch(e) {
-        if (Object.keys(e.touches).length === 1) {
+        if (touchIsDown) {
             const touch = e.touches[0];
             const P = { x: touch.clientX, y: touch.clientY };
             addPoint(P);
+        }
+        else if (e.touches.length === 2) {
+            const touch = e.touches[0];
+            const P = { x: touch.clientX, y: touch.clientY };
+            const touch2 = e.touches[1];
+            const Q = { x: touch2.clientX, y: touch2.clientY };
+            const newTwoFingerDist = dist(P, Q);
+            const newMidpoint = { x: (P.x + Q.x) / 2, y: (P.y + Q.y) / 2 };
+            svgTopLeft = {
+                left: twoFingerMidpoint.x - newMidpoint.x * zoomFactor,
+                top: twoFingerMidpoint.y - newMidpoint.y * zoomFactor,
+            }
+            zoomFactor = clamp(oldZoomFactor * twoFingerDist / newTwoFingerDist, minZoom, maxZoom);
         }
     }
     function handleTouchmove(e) {
         e.preventDefault();
         touchData = e;
-        if (debugMove) {
-            Object.entries(e.touches).forEach(entry => {
-                const [i, touch] = entry;
-                console.log(`touchmove ${i}:\t${JSON.stringify(eventPoint(touch))}`);
-            });
-        }
         recordTouch(e);
     }
     function handleTouchend(e) {
         e.preventDefault();
         touchData = {};
-        if (debugUpDown) {
-            console.log(`touchend:\t${JSON.stringify(e)}`)
-        }
-        // if (currentStroke && touchIsDown) recordStroke();
         if (strokeData.count && touchIsDown) recordStroke();
+        strokeData = new StrokeData(ID++, color);
         touchIsDown = false;
     }
     function recordMouse(e) {
@@ -91,15 +94,11 @@
         mouseData = e;
         mouseIsDown = e.button === 0;
         if (mouseData.button === 0) mouseData.mousedown = true;
-        if (debugUpDown)
-            console.log(`mousedown:\t${JSON.stringify(eventPoint(e))}`);
         if (mouseIsDown) recordMouse(e);
     }
     function handleMousemove(e) {
         e.preventDefault();
         mouseData = e;
-        if (debugMove)
-            console.log(`mousemove:\t${JSON.stringify(eventPoint(e))}`);
         if (mouseIsDown) recordMouse(e);
     }
     function handleMouseup(e) {
@@ -107,20 +106,39 @@
         mouseIsDown = false;
         mouseData = {};
         mouseData.mousedown = false;
-        if (debugUpDown) {
-            console.log(`mouseup:\t${JSON.stringify(e)}`)
-        }
         // if (currentStroke) recordStroke();
         if (strokeData.count) recordStroke();
     }
-    function eventPoint(e) { return { x: e.clientX, y: e.clientY }; }
     function handleClear() {
         strokes = [];
         update = 0;
+        zoomFactor = 1;
+        svgTopLeft = { left: 0, top: 0 };
+    }
+    function handleUndo() {
+        strokes.pop();
+        update++;
+    }
+    function screenToSVG(P) {
+        return {
+            x: dims.left + P.x / width * dims.width,
+            y: dims.top + P.y / height * dims.height,
+        }
+    }
+    let width = 0, height = 0;
+    $: console.log(width + "x" + height);
+    $: dims = {
+        ...svgTopLeft,
+        width: width * zoomFactor,
+        height: height * zoomFactor,
+        screenWidth: width,
+        screenHeight: height,
     }
 </script>
 
 <div class="whiteboard"
+    bind:clientWidth={width}
+    bind:clientHeight={height}
     on:touchstart={handleTouchStart}
     on:touchmove={handleTouchmove}
     on:touchend={handleTouchend}
@@ -134,8 +152,8 @@
     {/if}
     <Touchdata {touchData}></Touchdata>
 {/if}
-<Svg {strokes} {update} {strokeData}></Svg>
-<Bottombar bind:selectedColor={color} on:clear={handleClear}/>
+<Svg {strokes} {update} {strokeData} {dims}></Svg>
+<Bottombar bind:selectedColor={color} on:clear={handleClear} on:undo={handleUndo}/>
 </div>
 
 <style>

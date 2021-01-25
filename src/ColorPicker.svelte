@@ -21,5 +21,6 @@
 <style>
     .palette {
         display: flex;
+        margin: 0 20px;
     }
 </style>

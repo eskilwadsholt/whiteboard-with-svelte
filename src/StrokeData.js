@@ -1,42 +1,5 @@
-function QuadReg(points) {
-    /* Sources
-    1: https://math.stackexchange.com/questions/267865/equations-for-quadratic-regression
-    2: https://www.azdhs.gov/documents/preparedness/state-laboratory/lab-licensure-certification/technical-resources/calibration-training/12-quadratic-least-squares-regression-calib.pdf
-    */
-    let Sx2y = 0;
-    let Sxx = 0;
-    let Sxy = 0;
-    let Sxx2 = 0;
-    let Sx2x2 = 0;
-    let Sx3 = 0;
-    let Sx2 = 0;
-    let Sx = 0;
-    let Sy = 0;
-    let Sx4 = 0;
-    points.forEach(P => {
-        Sx += P.x;
-        Sx2 += P.x * P.x;
-        Sx3 += P.x * P.x * P.x;
-        Sx4 += P.x * P.x * P.x * P.x;
-        Sxy += P.x * P.y;
-        Sy += P.y;
-        Sx2y += P.x * P.x * P.y;
-    });
-    const N = points.length;
-    Sxx = Sx2 - Sx * Sx / N;
-    Sxx2 = Sx3 - Sx * Sx2 / N;
-    Sx2x2 = Sx4 - Sx2 * Sx2 / N;
-    Sxy = Sxy - Sx * Sy / N;
-    Sx2y = Sx2y - Sx2 * Sy / N;
-    const denom = Sxx * Sx2x2 - Sx * Sx2 * Sx * Sx2;
-    const a = (Sx2y * Sxx - Sxy * Sxx2) / denom;
-    const b = (Sxy * Sx2x2 - Sx2y * Sxx2) / denom;
-    const c = Sy / N - b * Sx / N - a * Sx2 / N;
-    return { a, b, c };
-}
-
 // Number of neighbours to each side of point to make quadreg to smooth
-const smoothing = 7;
+const smoothing = 5;
 
 // Compute constant parts of regression
 const t2 = {};
@@ -60,6 +23,10 @@ export class StrokeData {
         this.lastPoint = null;
         this.points = [];
         this.smoothPoints = [];
+        // Path keeps SVG-path until
+        this.first = "";
+        this.middle = "";
+        this.ending = "";
     }
     addPoint(P) {
         if (this.lastPoint != null) {
@@ -67,8 +34,19 @@ export class StrokeData {
         }
         this.points.push({ ...P });
         this.count++;
-        for (let k = Math.max(0, this.count - smoothing - 1); k < this.count; k++) {
+        this.ending = "";
+        const kstart = Math.max(0, this.count - smoothing - 1);
+        for (let k = kstart; k < this.count; k++) {
             this.smoothPoints[k] = this.smoothPoint(k);
+            this.ending += 
+            `L ${coords(this.smoothPoints[Math.max(0, k - 1)])},
+            ${coords(this.smoothPoints[Math.max(0, k)])}`;
+        }
+        if (kstart - 1 > 0) {
+            this.middle += `L ${coords(this.smoothPoints[Math.max(0, kstart - 2)])},
+            ${coords(this.smoothPoints[Math.max(0, kstart - 1)])}`;
+        } else {
+            this.first = `M ${coords(this.smoothPoints[0])}`;
         }
         this.lastPoint = P;
     }
@@ -99,13 +77,17 @@ export class StrokeData {
     }
 }
 
-function clamp(val, min, max) {
+function coords(P) {
+    return P.x + "," + P.y;
+}
+
+export function clamp(val, min, max) {
     if (val < min) return min;
     if (val > max) return max;
     return val;
 }
 
-function dist(P, Q) {
+export function dist(P, Q) {
     const dx = Q.x - P.x;
     const dy = Q.y - P.y;
     return Math.sqrt(dx * dx + dy * dy);

@@ -4,20 +4,20 @@
     const dispatch = createEventDispatcher();
 
     function handleClick() {
-        dispatch("clear");
+        dispatch("undo");
     }
 </script>
 
-<div class="clear" on:click={handleClick} on:touchstart={handleClick}>
-    Clear
+<div class="undo" on:click={handleClick} on:touchstart={handleClick}>
+    Undo
 </div>
 
 <style>
-    .clear {
+    .undo {
         font-variant: small-caps;
         font-weight: bolder;
         padding: 5px 10px;
-        background: cadetblue;
+        background: rebeccapurple;
         color: whitesmoke;
         text-shadow: 2px 2px black;
     }

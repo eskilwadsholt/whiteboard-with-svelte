@@ -12,7 +12,7 @@
     name={"dot-" + update}
     cx={stroke[0].x}
     cy={stroke[0].y}
-    r=5
+    r=7
     fill={color}
 ></circle>
 
