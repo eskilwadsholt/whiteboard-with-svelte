@@ -149,10 +149,12 @@
         screenHeight: height,
         zoom: zoomFactor,
     }
-    const host = 'http://localhost:5000';
+    //const host = 'http://localhost:5000';
+    const fullHost = 'https://sharepad-api.herokuapp.com';
+    const host = '';
     const latestPostedEndpoint = host + '/check-latest-posted/';
     const updatesEndpoint = host + '/check-for-updates/';
-    const getWhiteBoardEndpoint = host + '/get-whiteboard/';
+    const getWhiteBoardEndpoint = fullHost + '/get-whiteboard/';
     const postEndpoint = host + '/send-whiteboard/';
     let latestPosted = 0;
     async function postBoard() {
@@ -228,7 +230,7 @@
         });
         removeThose.forEach(presenter => delete presenters[presenter]);
     }
-    setInterval(checkForUpdates, 5000);
+    setInterval(checkForUpdates, 1000);
     async function getUserWhiteBoard(userDetails) {
         const getUserURL = new URL(getWhiteBoardEndpoint);
         getUserURL.search = new URLSearchParams(userDetails);
