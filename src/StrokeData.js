@@ -1,5 +1,5 @@
 // Number of neighbours to each side of point to make quadreg to smooth
-const smoothing = 5;
+const smoothing = 4;
 
 // Compute constant parts of regression
 const t2 = {};
@@ -15,11 +15,13 @@ const S11 = Stt;
 const S22 = St4 - Stt * Stt / N;
 
 export class StrokeData {
-    constructor(ID, color) {
+    constructor(ID, color, thickness) {
         this.ID = ID;
         this.color = color;
+        this.thickness = thickness;
         this.count = 0;
         this.curveLength = 0;
+        this.firstPoint = null;
         this.lastPoint = null;
         this.points = [];
         this.smoothPoints = [];
@@ -43,10 +45,10 @@ export class StrokeData {
             ${coords(this.smoothPoints[Math.max(0, k)])}`;
         }
         if (kstart - 1 > 0) {
-            this.middle += `L ${coords(this.smoothPoints[Math.max(0, kstart - 2)])},
-            ${coords(this.smoothPoints[Math.max(0, kstart - 1)])}`;
+            this.middle += `L ${coords(this.smoothPoints[Math.max(0, kstart - 2)])},${coords(this.smoothPoints[Math.max(0, kstart - 1)])}`;
         } else {
             this.first = `M ${coords(this.smoothPoints[0])}`;
+            this.firstPoint = this.smoothPoints[0];
         }
         this.lastPoint = P;
     }

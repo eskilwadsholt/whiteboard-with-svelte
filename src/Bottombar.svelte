@@ -1,12 +1,14 @@
 <script>
     import Clear from "./Clear.svelte";
     import ColorPicker from "./ColorPicker.svelte";
+    import ThicknessPicker from "./ThicknessPicker.svelte";
     import Undo from "./Undo.svelte";
-    export let selectedColor = $$props.selectedColor;
+    export let selectedColor;
     function stopEvent(e) {
         e.preventDefault();
         e.stopPropagation();
     }
+    export let thickness;
 </script>
 
 <div class="bottombar"
@@ -19,13 +21,16 @@
     >
     <Undo on:undo/>
     <ColorPicker bind:selected={selectedColor}/>
+    <ThicknessPicker
+        bind:thickness={thickness}
+        color={selectedColor}/>
     <Clear on:clear/>
 </div>
 
 <style>
     .bottombar {
         display: flex;
-        justify-content: center;
+        justify-content: space-between;
         align-items: center;
         position: fixed;
         bottom: 0;

@@ -19,6 +19,6 @@
         padding: 5px 10px;
         background: cadetblue;
         color: whitesmoke;
-        text-shadow: 2px 2px black;
+        box-shadow: 0 0 5px black;
     }
 </style>
