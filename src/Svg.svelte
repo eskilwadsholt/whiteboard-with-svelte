@@ -5,8 +5,8 @@
     export let presenters = {};
     $: strokes = $$props.strokes;
     $: update = $$props.update;
-    $: strokeData = $$props.strokeData;
-    const minStroke = 15; // Make at least 15 pixels long strokes
+    $: currentStroke = $$props.currentStroke;
+    const minStroke = 8; // Make at least 8 pixels long strokes
     const outline = 10;
 </script>
 
@@ -43,7 +43,7 @@
     {/each}
     {#each Object.keys(presenters) as presenter}
         {#each presenters[presenter].strokes as stroke}
-            {#if stroke.curveLength > minStroke}
+            {#if stroke.pixelDist > minStroke}
             <Stroke {stroke} {update}></Stroke>
             {:else}
             <Dot {stroke} {update}></Dot>
@@ -51,14 +51,14 @@
         {/each}
     {/each}
     {#each strokes as stroke}
-        {#if stroke.curveLength > minStroke}
+        {#if stroke.pixelDist > minStroke}
         <Stroke {stroke} {update}></Stroke>
         {:else}
         <Dot {stroke} {update}></Dot>
         {/if}
     {/each}
-    {#if strokeData.count}
-    <Stroke stroke={strokeData} update="current"></Stroke>
+    {#if currentStroke.count}
+    <Stroke stroke={currentStroke} update="current"></Stroke>
     {/if}
 </svg>
 

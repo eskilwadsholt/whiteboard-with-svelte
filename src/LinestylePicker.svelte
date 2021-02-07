@@ -1,28 +1,30 @@
 <script>
     import { flip } from 'svelte/animate';
-    import { each } from "svelte/internal";
 
     export let color;
-    export let thickness;
 
-    const thicknesses = [
-        { id: 0, thickness: 2 },
-        { id: 1, thickness: 5 },
-        { id: 2, thickness: 8 },
-        { id: 3, thickness: 12 },
-        { id: 4, thickness: 18 },
+    const linestyles = [
+        { id: 0, thickness: 2, dash: 0 },
+        { id: 1, thickness: 4, dash: 0 },
+        { id: 2, thickness: 6, dash: 0 },
+        { id: 3, thickness: 2, dash: 10 },
+        { id: 4, thickness: 4, dash: 14 },
+        { id: 5, thickness: 6, dash: 18 },
     ]
 
-    let selectedThickness = thicknesses[1];
-    $: thickness = selectedThickness.thickness;
+    export let selectedStyle = linestyles[1];
     let open=false;
+    export let openMenus;
+    $: if (open) openMenus.linestylepicker = true; else openMenus.linestylepicker = false;
+    export let hide;
 
     function toggleOpen() {
         open = !open;
     }
 
     function select(i) {
-        selectedThickness = thicknesses[i];
+        selectedStyle = linestyles[i];
+        console.log("New selected style in picker: " + JSON.stringify(selectedStyle));
     }
 
     const animOptions = {
@@ -37,27 +39,29 @@
 </script>
 
 <div class="palette"
+    class:hide
+    class:open
     on:click={toggleOpen}
     on:touchstart={toggleOpen}>
-    {#each thicknesses as thickness (thickness.id)}
+    {#each linestyles as linestyle (linestyle.id)}
         <div
             animate:flip={animOptions}
-            class:highlight={thickness === selectedThickness}
+            class:highlight={linestyle === selectedStyle}
+            on:click={() => select(linestyle.id)}
+            on:touchstart={() => select(linestyle.id)}
             class:open
-            on:click={() => select(thickness.id)}
-            on:touchstart={() => select(thickness.id)}
-            class="thickness"
-            id={thickness.id}>
+            class="linestyle"
+            id={linestyle.id}>
             <svg width="40px" height="40px">
                 <path
                     stroke={color?.code}
-                    stroke-width={thickness.thickness}
+                    stroke-width={linestyle.thickness}
+                    stroke-dasharray={linestyle.dash}
                     d={pathData}
                 ></path>
             </svg>
         </div>
     {/each}
-    <!--Color animate:flip {color} bind:setSelected={selected}/-->
 </div>
 
 <style>
@@ -66,7 +70,7 @@
         display: flex;
         margin: 0 10px;
     }
-    .thickness {
+    .linestyle {
         position: absolute;
         left: 0;
         top: 0;
@@ -74,7 +78,12 @@
         height: fit-content;
         margin: 5px;
     }
+    .hide {
+        position: absolute;
+        visibility: hidden;
+    }
     .open {
+        visibility: visible;
         position: relative;
         left: initial;
         top: initial;

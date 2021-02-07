@@ -15,48 +15,63 @@ const S11 = Stt;
 const S22 = St4 - Stt * Stt / N;
 
 export class StrokeData {
-    constructor(ID, color, thickness) {
+
+    constructor(ID, color, thickness, dash) {
         this.ID = ID;
         this.color = color;
         this.thickness = thickness;
-        this.count = 0;
-        this.curveLength = 0;
+        this.dash = dash;
+        this.count = 0; // TODO: Check if this always corresponds to points.length
+        this.curveLength = 0; // In SVG pixels
+        this.pixelDist = 0; // In screen pixels at time of 
         this.firstPoint = null;
         this.lastPoint = null;
         this.points = [];
         this.smoothPoints = [];
-        // Path keeps SVG-path until
+
+        // Store parts of SVG-path
         this.first = "";
         this.middle = "";
         this.ending = "";
     }
+
+    addPixelDist(P, Q) {
+        this.pixelDist += dist(P, Q);
+    }
+
     addPoint(P) {
         if (this.lastPoint != null) {
             this.curveLength += dist(this.lastPoint, P);
         }
+
         this.points.push({ ...P });
         this.count++;
         this.ending = "";
         const kstart = Math.max(0, this.count - smoothing - 1);
+
         for (let k = kstart; k < this.count; k++) {
             this.smoothPoints[k] = this.smoothPoint(k);
             this.ending += 
             `L ${coords(this.smoothPoints[Math.max(0, k - 1)])},
             ${coords(this.smoothPoints[Math.max(0, k)])}`;
         }
+
         if (kstart - 1 > 0) {
             this.middle += `L ${coords(this.smoothPoints[Math.max(0, kstart - 2)])},${coords(this.smoothPoints[Math.max(0, kstart - 1)])}`;
         } else {
             this.first = `M ${coords(this.smoothPoints[0])}`;
             this.firstPoint = this.smoothPoints[0];
         }
+
         this.lastPoint = P;
     }
+
     smoothPoint(k) {
         let Sx = this.points[k].x;
         let St2x = 0;
         let Sy = this.points[k].y;
         let St2y = 0;
+
         /* Combine x[k + i] and x[k - i] since they should be multiplied by
         *  the same t and t^2
         */
@@ -70,11 +85,13 @@ export class StrokeData {
             Sy += ys;
             St2y += t2[i] * ys;
         }
+
         // Compute symmetric quadratic regression for x(t) and y(t)
         const ax = (St2x - S11 * Sx / N) / S22;
         const cx = (Sx - ax * S11) / N;
         const ay = (St2y - S11 * Sy / N) / S22;
         const cy = (Sy - ay * S11) / N;
+        
         return { x: cx, y : cy};
     }
 }

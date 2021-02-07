@@ -1,6 +1,5 @@
 <script>
     import { flip } from 'svelte/animate';
-    import { each } from "svelte/internal";
 
     const colors = [
         { id: 0, name: "white", code: "#FFF" },
@@ -12,6 +11,9 @@
 
     export let selected = colors[0];
     let open=false;
+    export let openMenus;
+    $: if (open) openMenus.colorpicker = true; else openMenus.colorpicker = false;
+    export let hide;
 
     function toggleOpen() {
         open = !open;
@@ -27,15 +29,17 @@
 </script>
 
 <div class="palette"
+    class:hide
+    class:open
     on:click={toggleOpen}
     on:touchstart={toggleOpen}>
     {#each colors as color (color.id)}
         <div
             animate:flip={animOptions}
             class:highlight={color === selected}
-            class:open
             on:click={() => select(color.id)}
             on:touchstart={() => select(color.id)}
+            class:open
             class="color"
             id={color.name}
             style="background: {color.code}">
@@ -58,7 +62,12 @@
         height: 40px;
         margin: 5px;
     }
+    .hide {
+        position: absolute;
+        visibility: hidden;
+    }
     .open {
+        visibility: visible;
         position: relative;
         left: initial;
         top: initial;

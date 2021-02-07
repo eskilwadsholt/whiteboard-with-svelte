@@ -4,47 +4,72 @@
     import Mousedata from "./Mousedata.svelte";
     import Svg from "./Svg.svelte";
     import Touchdata from "./Touchdata.svelte";
+
+    const updateFrequency = NaN; // Milliseconds between server requests
     let color;
-    let thickness;
+    let linestyle;
     const debugging = false;
     let mouseData = {};
     let touchData = {};
-    let update = 0;
-    let presenters = { };
+    // Alternative to observable array
+    let update = 0; // When stroke array is updated
     let strokes = [];
+
+    let presenters = { };
     let boardID = new Date();
     let ID = 0;
     let zoomFactor = 1;
-    $: { 
-        strokeData.color = color;
-        strokeData.thickness = thickness * zoomFactor;
-    }
-    function createNewStroke() { return new StrokeData(ID++, color, thickness * zoomFactor); }
-    let strokeData = createNewStroke();
-    let mouseIsDown = false;
+    let lastP = null;
+
+    let currentStroke = createNewStroke();
+    let leftMouseIsDown = false;
+    let rightMouseIsDown = false;
     let touchIsDown = false;
     const maxZoom = 20;
-    const minZoom = 0.5;
+    const minZoom = 0.25;
     let oldZoomFactor = 1;
     let twoFingerDist = 0;
     let twoFingerMidpoint = null;
     let svgTopLeft = { left: 0, top: 0 };
     let latestChangeTimestamp = new Date();
     let changes = 0;
+
+    $: console.log(linestyle);
+
+    $: {
+        currentStroke.color = color;
+        // TODO: refactor so that zoomFactor is applied when drawing instead
+        currentStroke.thickness = linestyle ? linestyle.thickness * zoomFactor : 4;
+        currentStroke.dash = linestyle ? linestyle.dash * zoomFactor : 0;
+    }
+
+    function createNewStroke() {
+        lastP = null;
+        if (linestyle)
+            return new StrokeData(ID++, color, linestyle.thickness * zoomFactor, linestyle.dash * zoomFactor);
+        return new StrokeData(ID++, color, 4, 0);
+    }
+    
     function addPoint(P) {
-        strokeData.addPoint(screenToSVG(P));
+        currentStroke.addPoint(screenToSVG(P));
+        if (lastP) currentStroke.addPixelDist(lastP, P);
+        lastP = P;
         update++;
     }
+
     function recordStroke() {
-        if (strokeData.count) {
-            const { curveLength, thickness, color, firstPoint, first, middle, ending } = strokeData;
-            strokes.push({ curveLength, thickness, color, firstPoint, first, middle, ending });
-            strokeData = createNewStroke();
+        if (currentStroke.count) {
+            // TODO: consider structuring data for stroke records in single variable (DTO)
+            const { pixelDist, thickness, dash, color, firstPoint, first, middle, ending } = currentStroke;
+            console.log({ first, middle, ending });
+            strokes.push({ pixelDist, thickness, dash, color, firstPoint, first, middle, ending });
+            currentStroke = createNewStroke();
             update++;
             latestChangeTimestamp = new Date();
             changes++;
         }
     }
+
     // Detect mouse and touch events
     function handleTouchStart(e) {
         e.preventDefault();
@@ -54,7 +79,7 @@
             recordTouch(e);
         } else if (e.touches.length === 2) {
             touchIsDown = false;
-            strokeData = createNewStroke();
+            currentStroke = createNewStroke();
             const touch = e.touches[0];
             const P = { x: touch.clientX, y: touch.clientY };
             const touch2 = e.touches[1];
@@ -64,6 +89,7 @@
             oldZoomFactor = zoomFactor;
         }
     }
+
     function recordTouch(e) {
         if (touchIsDown) {
             const touch = e.touches[0];
@@ -84,42 +110,68 @@
             zoomFactor = clamp(oldZoomFactor * twoFingerDist / newTwoFingerDist, minZoom, maxZoom);
         }
     }
+
     function handleTouchmove(e) {
         e.preventDefault();
         touchData = e;
         recordTouch(e);
     }
+
     function handleTouchend(e) {
         e.preventDefault();
         touchData = {};
-        if (strokeData.count && touchIsDown) recordStroke();
-        strokeData = createNewStroke();
+        if (currentStroke.count && touchIsDown) recordStroke();
+        currentStroke = createNewStroke();
         latestChangeTimestamp = new Date();
         touchIsDown = false;
     }
-    function recordMouse(e) {
+
+    function recordLeftMouse(e) {
         const P = { x: e.clientX, y: e.clientY };
         addPoint(P);
     }
+
     function handleMousedown(e) {
         e.preventDefault();
         mouseData = e;
-        mouseIsDown = e.button === 0;
+        leftMouseIsDown = e.button === 0;
+        rightMouseIsDown = e.button === 2;
         if (mouseData.button === 0) mouseData.mousedown = true;
-        if (mouseIsDown) recordMouse(e);
+        if (leftMouseIsDown) recordLeftMouse(e);
     }
+
     function handleMousemove(e) {
         e.preventDefault();
         mouseData = e;
-        if (mouseIsDown) recordMouse(e);
+        if (leftMouseIsDown) recordLeftMouse(e);
+        if (rightMouseIsDown) {
+            // TODO: movementX and movementY are clunky - use mouseDownPoint as reference instead
+            svgTopLeft = {
+                left: svgTopLeft.left - e.movementX * zoomFactor,
+                top: svgTopLeft.top - e.movementY * zoomFactor
+            }
+        }
     }
+
     function handleMouseup(e) {
         e.preventDefault();
-        mouseIsDown = false;
+        leftMouseIsDown = false;
+        rightMouseIsDown = false;
         mouseData = {};
         mouseData.mousedown = false;
-        if (strokeData.count) recordStroke();
+        if (currentStroke.count) recordStroke();
     }
+
+    function handleWheel(e) {
+        // TODO: make shared zoom computation for touch and mouse
+        const mouseSVGpoint = screenToSVG({ x: e.clientX, y: e.clientY });
+        zoomFactor = clamp(zoomFactor * Math.pow(2, -e.wheelDelta / 300), minZoom, maxZoom);
+        svgTopLeft = { 
+            left: mouseSVGpoint.x - e.clientX * zoomFactor, 
+            top: mouseSVGpoint.y - e.clientY * zoomFactor 
+        };
+    }
+
     function handleClear() {
         strokes = [];
         update++;
@@ -127,18 +179,21 @@
         latestChangeTimestamp = new Date();
         changes++;
     }
+
     function handleUndo() {
         strokes.pop();
         update++;
         latestChangeTimestamp = new Date();
         changes++;
     }
+
     function screenToSVG(P) {
         return {
             x: dims.left + P.x / width * dims.width,
             y: dims.top + P.y / height * dims.height,
         }
     }
+
     let width = 0, height = 0;
     $: console.log(width + "x" + height);
     $: dims = {
@@ -149,13 +204,11 @@
         screenHeight: height,
         zoom: zoomFactor,
     }
-    //const host = 'http://localhost:5000';
-    const fullHost = 'https://sharepad-api.herokuapp.com';
-    const host = '';
-    const latestPostedEndpoint = host + '/check-latest-posted/';
-    const updatesEndpoint = host + '/check-for-updates/';
-    const getWhiteBoardEndpoint = fullHost + '/get-whiteboard/';
-    const postEndpoint = host + '/send-whiteboard/';
+    const host = window.location.origin;
+    const postEndpoint = '/send-whiteboard/';
+    const latestPostedEndpoint = '/check-latest-posted/';
+    const updatesEndpoint = '/check-for-updates/';
+    const getWhiteBoardEndpoint = host + '/get-whiteboard/';
     let latestPosted = 0;
     async function postBoard() {
         const newTimestamp = latestChangeTimestamp.getTime() + changes * 0.0001;
@@ -223,17 +276,19 @@
                 getUserWhiteBoard(presenterDetails);
             }
         });
-        // Remove presenter that are not currently presenting ...
+        // Remove presenters that are not currently presenting ...
         const removeThose = [];
         Object.keys(presenters).forEach(presenter => {
             if (!(presenter in latestUpdates)) removeThose.push(presenter);
         });
         removeThose.forEach(presenter => delete presenters[presenter]);
     }
-    setInterval(checkForUpdates, 1000);
+    if (updateFrequency) setInterval(checkForUpdates, updateFrequency);
     async function getUserWhiteBoard(userDetails) {
+        console.log(getWhiteBoardEndpoint);
         const getUserURL = new URL(getWhiteBoardEndpoint);
         getUserURL.search = new URLSearchParams(userDetails);
+        console.log(getUserURL);
         const res = await fetch(getUserURL, {
             method: 'GET',
             mode: 'cors', // no-cors, *cors, same-origin
@@ -261,17 +316,18 @@
     on:mousedown={handleMousedown}
     on:mousemove={handleMousemove}
     on:mouseup={handleMouseup}
+    on:wheel={handleWheel}
 >
 {#if debugging}
-    {#if mouseIsDown}
+    {#if leftMouseIsDown}
     <Mousedata {mouseData}></Mousedata>
     {/if}
     <Touchdata {touchData}></Touchdata>
 {/if}
-<Svg {presenters} {strokes} {update} {strokeData} {dims}></Svg>
+<Svg {presenters} {strokes} {update} {currentStroke} {dims}></Svg>
 <Bottombar 
     bind:selectedColor={color}
-    bind:thickness={thickness}
+    bind:linestyle={linestyle}
     on:clear={handleClear}
     on:undo={handleUndo}/>
 </div>
