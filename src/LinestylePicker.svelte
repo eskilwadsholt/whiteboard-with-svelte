@@ -24,7 +24,7 @@
 
     function select(i) {
         selectedStyle = linestyles[i];
-        console.log("New selected style in picker: " + JSON.stringify(selectedStyle));
+        //console.log("New selected style in picker: " + JSON.stringify(selectedStyle));
     }
 
     const animOptions = {

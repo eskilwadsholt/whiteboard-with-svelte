@@ -1,8 +1,11 @@
 <script>
 	import Whiteboard from "./Whiteboard.svelte";
+	function handleContextMenu(e) {
+		e.preventDefault();
+	}
 </script>
 
-<main>
+<main on:contextmenu={handleContextMenu}>
 	<Whiteboard/>
 </main>
 	

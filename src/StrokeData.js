@@ -1,5 +1,6 @@
 // Number of neighbours to each side of point to make quadreg to smooth
 const smoothing = 4;
+const catmulRomDist = 0.3;
 
 // Compute constant parts of regression
 const t2 = {};
@@ -21,7 +22,6 @@ export class StrokeData {
         this.color = color;
         this.thickness = thickness;
         this.dash = dash;
-        this.count = 0; // TODO: Check if this always corresponds to points.length
         this.curveLength = 0; // In SVG pixels
         this.pixelDist = 0; // In screen pixels at time of 
         this.firstPoint = null;
@@ -31,8 +31,9 @@ export class StrokeData {
 
         // Store parts of SVG-path
         this.first = "";
-        this.middle = "";
+        // this.middle = ""; // TODO: Deprecated - optimize cubic version instead
         this.ending = "";
+        this.cubicMiddle = "";
     }
 
     addPixelDist(P, Q) {
@@ -45,19 +46,46 @@ export class StrokeData {
         }
 
         this.points.push({ ...P });
-        this.count++;
         this.ending = "";
-        const kstart = Math.max(0, this.count - smoothing - 1);
+        const kstart = Math.max(0, this.points.length - smoothing - 1);
 
-        for (let k = kstart; k < this.count; k++) {
+        for (let k = kstart; k < this.points.length; k++) {
             this.smoothPoints[k] = this.smoothPoint(k);
             this.ending += 
             `L ${coords(this.smoothPoints[Math.max(0, k - 1)])},
             ${coords(this.smoothPoints[Math.max(0, k)])}`;
         }
 
+        /*
         if (kstart - 1 > 0) {
             this.middle += `L ${coords(this.smoothPoints[Math.max(0, kstart - 2)])},${coords(this.smoothPoints[Math.max(0, kstart - 1)])}`;
+            
+        }
+        */
+        if (kstart - 2 > 0) {
+            // Compute catmulRom variant for cubic spline
+            const P1 = this.smoothPoints[kstart - 2];
+            const P2 = this.smoothPoints[kstart - 1];
+            const P3 = this.smoothPoints[kstart];
+            const P4 = this.smoothPoints[kstart + 1];
+            const dx1 = P3.x - P1.x;
+            const dy1 = P3.y - P1.y;
+            const norm1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
+            const d = dist(P2, P3)
+            const control1 = { ...P2 };
+            if (norm1 > 0) {
+                control1.x +=  catmulRomDist * d * dx1 / norm1;
+                control1.y +=  catmulRomDist * d * dy1 / norm1;
+            }
+            const dx2 = P4.x - P2.x;
+            const dy2 = P4.y - P2.y;
+            const norm2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+            const control2 = { ...P3 };
+            if (norm2 > 0) {
+                control2.x -=  catmulRomDist * d * dx2 / norm2;
+                control2.y -=  catmulRomDist * d * dy2 / norm2;
+            }
+            this.cubicMiddle += `C${coords(control1)} ${coords(control2)} ${coords(P3)}`;
         } else {
             this.first = `M ${coords(this.smoothPoints[0])}`;
             this.firstPoint = this.smoothPoints[0];
@@ -76,8 +104,8 @@ export class StrokeData {
         *  the same t and t^2
         */
         for (let i = 1; i <= smoothing; i++) {
-            const Pi = this.points[clamp(k + i, 0, this.count - 1)];
-            const Pminusi = this.points[clamp(k - i, 0, this.count - 1)];
+            const Pi = this.points[clamp(k + i, 0, this.points.length - 1)];
+            const Pminusi = this.points[clamp(k - i, 0, this.points.length - 1)];
             const xs = Pi.x + Pminusi.x;
             Sx += xs;
             St2x += t2[i] * xs;

@@ -5,7 +5,7 @@
     import Svg from "./Svg.svelte";
     import Touchdata from "./Touchdata.svelte";
 
-    const updateFrequency = NaN; // Milliseconds between server requests
+    const updateFrequency = 30; // Milliseconds between server requests
     let color;
     let linestyle;
     const debugging = false;
@@ -34,7 +34,7 @@
     let latestChangeTimestamp = new Date();
     let changes = 0;
 
-    $: console.log(linestyle);
+    //$: console.log(linestyle);
 
     $: {
         currentStroke.color = color;
@@ -58,11 +58,11 @@
     }
 
     function recordStroke() {
-        if (currentStroke.count) {
+        if (currentStroke.points.length) {
             // TODO: consider structuring data for stroke records in single variable (DTO)
-            const { pixelDist, thickness, dash, color, firstPoint, first, middle, ending } = currentStroke;
-            console.log({ first, middle, ending });
-            strokes.push({ pixelDist, thickness, dash, color, firstPoint, first, middle, ending });
+            const { pixelDist, thickness, dash, color, firstPoint, first, cubicMiddle, ending } = currentStroke;
+            //console.log({ first, middle, ending });
+            strokes.push({ pixelDist, thickness, dash, color, firstPoint, first, cubicMiddle, ending });
             currentStroke = createNewStroke();
             update++;
             latestChangeTimestamp = new Date();
@@ -120,7 +120,7 @@
     function handleTouchend(e) {
         e.preventDefault();
         touchData = {};
-        if (currentStroke.count && touchIsDown) recordStroke();
+        if (currentStroke.points.length && touchIsDown) recordStroke();
         currentStroke = createNewStroke();
         latestChangeTimestamp = new Date();
         touchIsDown = false;
@@ -138,6 +138,7 @@
         rightMouseIsDown = e.button === 2;
         if (mouseData.button === 0) mouseData.mousedown = true;
         if (leftMouseIsDown) recordLeftMouse(e);
+        e.stopPropagation();
     }
 
     function handleMousemove(e) {
@@ -151,6 +152,7 @@
                 top: svgTopLeft.top - e.movementY * zoomFactor
             }
         }
+        e.stopPropagation();
     }
 
     function handleMouseup(e) {
@@ -159,17 +161,20 @@
         rightMouseIsDown = false;
         mouseData = {};
         mouseData.mousedown = false;
-        if (currentStroke.count) recordStroke();
+        if (currentStroke.points.length) recordStroke();
     }
 
     function handleWheel(e) {
+        e.preventDefault();
         // TODO: make shared zoom computation for touch and mouse
         const mouseSVGpoint = screenToSVG({ x: e.clientX, y: e.clientY });
-        zoomFactor = clamp(zoomFactor * Math.pow(2, -e.wheelDelta / 300), minZoom, maxZoom);
+        const wheelDelta = e.wheelDelta ? -e.wheelDelta : 50 * e.deltaY;
+        zoomFactor = clamp(zoomFactor * Math.pow(2, wheelDelta / 300), minZoom, maxZoom);
         svgTopLeft = { 
             left: mouseSVGpoint.x - e.clientX * zoomFactor, 
             top: mouseSVGpoint.y - e.clientY * zoomFactor 
         };
+        e.stopPropagation();
     }
 
     function handleClear() {
@@ -195,7 +200,7 @@
     }
 
     let width = 0, height = 0;
-    $: console.log(width + "x" + height);
+    //$: console.log(width + "x" + height);
     $: dims = {
         ...svgTopLeft,
         width: width * zoomFactor,
@@ -230,7 +235,7 @@
         
         const json = await res.json();
         const result = JSON.stringify(json);
-        console.log(newTimestamp + "\t" + result);
+        //console.log(newTimestamp + "\t" + result);
         checkLatestPosted();
     }
     $: postBoard(latestChangeTimestamp);
@@ -247,10 +252,10 @@
         
         const json = await res.json();
         latestPostOnServer = json._timestamp;
-        console.log(latestPosted);
+        //console.log(latestPosted);
         if (latestPostOnServer < latestPosted) {
             // Make sure to post board again to update to latest
-            console.log("Post board again ...");
+            //console.log("Post board again ...");
             postBoard();
         }
     }
@@ -267,7 +272,7 @@
         
         const json = await res.json();
         latestUpdates = json;
-        console.log(latestUpdates);
+        //console.log(latestUpdates);
         Object.keys(latestUpdates).forEach(presenter => {
             if (!(presenter in presenters)
                 ||
@@ -285,10 +290,10 @@
     }
     if (updateFrequency) setInterval(checkForUpdates, updateFrequency);
     async function getUserWhiteBoard(userDetails) {
-        console.log(getWhiteBoardEndpoint);
+        //console.log(getWhiteBoardEndpoint);
         const getUserURL = new URL(getWhiteBoardEndpoint);
         getUserURL.search = new URLSearchParams(userDetails);
-        console.log(getUserURL);
+        //console.log(getUserURL);
         const res = await fetch(getUserURL, {
             method: 'GET',
             mode: 'cors', // no-cors, *cors, same-origin
@@ -299,7 +304,7 @@
         });
         
         const json = await res.json();
-        console.log(json);
+        //console.log(json);
         if ("strokes" in json) {
             presenters[userDetails.presenter] = { name: userDetails.name,  ...json};
             update++;

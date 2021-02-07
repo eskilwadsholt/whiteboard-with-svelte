@@ -1,7 +1,7 @@
 <script>
     //$: stroke = $$props.stroke.smoothPoints;
     export let stroke;
-    $: path = stroke.first + stroke.middle + stroke.ending;
+    $: cubicPath = stroke.first + stroke.cubicMiddle + stroke.ending;
     let color = `#FFF`;
     let thickness = 4;
     let dash = 0;
@@ -11,14 +11,13 @@
         dash = stroke.dash;
     }
     let update = $$props.update;
-    let path = "";
 </script>
 
 <path stroke={color}
     stroke-width={thickness}
     stroke-dasharray={dash}
     name={"stroke-" + update}
-    d={path}>
+    d={cubicPath}>
 </path>
 
 <style>

@@ -57,7 +57,7 @@
         <Dot {stroke} {update}></Dot>
         {/if}
     {/each}
-    {#if currentStroke.count}
+    {#if currentStroke.points.length}
     <Stroke stroke={currentStroke} update="current"></Stroke>
     {/if}
 </svg>
