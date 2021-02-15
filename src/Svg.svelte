@@ -44,7 +44,7 @@
     {#each Object.keys(presenters) as presenter}
         {#each presenters[presenter].strokes as stroke}
             {#if stroke.pixelDist > minStroke}
-            <Stroke {stroke} {update}></Stroke>
+            <Stroke animation={{ speed: 1 }} {stroke} {update}></Stroke>
             {:else}
             <Dot {stroke} {update}></Dot>
             {/if}

@@ -1,11 +1,12 @@
 <script>
+    import { onMount } from 'svelte';
     import { StrokeData, dist, clamp } from "./StrokeData";
     import Bottombar from "./Bottombar.svelte";
     import Mousedata from "./Mousedata.svelte";
     import Svg from "./Svg.svelte";
     import Touchdata from "./Touchdata.svelte";
 
-    const updateFrequency = 30; // Milliseconds between server requests
+    const updateFrequency = NaN; // Milliseconds between server requests
     let color;
     let linestyle;
     const debugging = false;
@@ -34,7 +35,7 @@
     let latestChangeTimestamp = new Date();
     let changes = 0;
 
-    //$: console.log(linestyle);
+    //$: console.debug(linestyle);
 
     $: {
         currentStroke.color = color;
@@ -59,10 +60,7 @@
 
     function recordStroke() {
         if (currentStroke.points.length) {
-            // TODO: consider structuring data for stroke records in single variable (DTO)
-            const { pixelDist, thickness, dash, color, firstPoint, first, cubicMiddle, ending } = currentStroke;
-            //console.log({ first, middle, ending });
-            strokes.push({ pixelDist, thickness, dash, color, firstPoint, first, cubicMiddle, ending });
+            strokes.push(currentStroke.export());
             currentStroke = createNewStroke();
             update++;
             latestChangeTimestamp = new Date();
@@ -162,6 +160,7 @@
         mouseData = {};
         mouseData.mousedown = false;
         if (currentStroke.points.length) recordStroke();
+        latestChangeTimestamp = new Date();
     }
 
     function handleWheel(e) {
@@ -174,6 +173,7 @@
             left: mouseSVGpoint.x - e.clientX * zoomFactor, 
             top: mouseSVGpoint.y - e.clientY * zoomFactor 
         };
+        latestChangeTimestamp = new Date();
         e.stopPropagation();
     }
 
@@ -200,7 +200,7 @@
     }
 
     let width = 0, height = 0;
-    //$: console.log(width + "x" + height);
+    //$: console.debug(width + "x" + height);
     $: dims = {
         ...svgTopLeft,
         width: width * zoomFactor,
@@ -235,11 +235,14 @@
         
         const json = await res.json();
         const result = JSON.stringify(json);
-        //console.log(newTimestamp + "\t" + result);
+        //console.debug(newTimestamp + "\t" + result);
         checkLatestPosted();
     }
-    $: postBoard(latestChangeTimestamp);
+
+    $: if (updateFrequency) postBoard(latestChangeTimestamp);
+
     let latestPostOnServer = 0;
+
     async function checkLatestPosted() {
         const res = await fetch(latestPostedEndpoint, {
             method: 'GET',
@@ -252,10 +255,10 @@
         
         const json = await res.json();
         latestPostOnServer = json._timestamp;
-        //console.log(latestPosted);
+        //console.debug(latestPosted);
         if (latestPostOnServer < latestPosted) {
             // Make sure to post board again to update to latest
-            //console.log("Post board again ...");
+            //console.debug("Post board again ...");
             postBoard();
         }
     }
@@ -272,7 +275,8 @@
         
         const json = await res.json();
         latestUpdates = json;
-        //console.log(latestUpdates);
+
+        //console.debug(latestUpdates);
         Object.keys(latestUpdates).forEach(presenter => {
             if (!(presenter in presenters)
                 ||
@@ -281,19 +285,28 @@
                 getUserWhiteBoard(presenterDetails);
             }
         });
+
         // Remove presenters that are not currently presenting ...
         const removeThose = [];
+
         Object.keys(presenters).forEach(presenter => {
             if (!(presenter in latestUpdates)) removeThose.push(presenter);
         });
+
+
         removeThose.forEach(presenter => delete presenters[presenter]);
+
+        if (removeThose.length > 0) update++;
     }
+
     if (updateFrequency) setInterval(checkForUpdates, updateFrequency);
+
     async function getUserWhiteBoard(userDetails) {
-        //console.log(getWhiteBoardEndpoint);
+        //console.debug(getWhiteBoardEndpoint);
         const getUserURL = new URL(getWhiteBoardEndpoint);
         getUserURL.search = new URLSearchParams(userDetails);
-        //console.log(getUserURL);
+        //console.debug(getUserURL);
+
         const res = await fetch(getUserURL, {
             method: 'GET',
             mode: 'cors', // no-cors, *cors, same-origin
@@ -304,12 +317,15 @@
         });
         
         const json = await res.json();
-        //console.log(json);
+        //console.debug(json);
+
         if ("strokes" in json) {
             presenters[userDetails.presenter] = { name: userDetails.name,  ...json};
-            update++;
         }
+        update++;
     }
+
+    onMount(postBoard);
 </script>
 
 <div class="whiteboard"
