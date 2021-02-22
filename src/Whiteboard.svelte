@@ -53,13 +53,12 @@
 
     function calibratedFinger(P) {
         return {
-            x: P.x - 15,
-            y: P.y - 5
+            x: P.x - 20,
+            y: P.y
         }
     }
     
     function addPoint(P) {
-        P = calibratedFinger(P);
         currentStroke.addPoint(screenToSVG(P));
         if (lastP) currentStroke.addPixelDist(lastP, P);
         lastP = P;
@@ -100,7 +99,7 @@
         if (touchIsDown) {
             const touch = e.touches[0];
             const P = { x: touch.clientX, y: touch.clientY };
-            addPoint(P);
+            addPoint(calibratedFinger(P));
         }
         else if (e.touches.length === 2) {
             const touch = e.touches[0];

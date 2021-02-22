@@ -4,15 +4,14 @@
     export let color;
 
     const linestyles = [
-        { id: 0, thickness: 2, dash: 0 },
-        { id: 1, thickness: 4, dash: 0 },
-        { id: 2, thickness: 6, dash: 0 },
-        { id: 3, thickness: 2, dash: 10 },
-        { id: 4, thickness: 4, dash: 14 },
-        { id: 5, thickness: 6, dash: 18 },
+        { id: 1, thickness: 2, dash: 0 },
+        { id: 0, thickness: 3, dash: 0 },
+        { id: 2, thickness: 8, dash: 0 },
+        { id: 3, thickness: 2, dash: 8 },
+        { id: 4, thickness: 3, dash: 12 },
     ]
 
-    export let selectedStyle = linestyles[1];
+    export let selectedStyle = linestyles[0];
     let open=false;
     export let openMenus;
     $: if (open) openMenus.linestylepicker = true; else openMenus.linestylepicker = false;
