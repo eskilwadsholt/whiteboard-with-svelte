@@ -50,6 +50,7 @@ export class StrokeData {
         this.ending = "";
         this.controls = "";
         this.corrections = "";
+        this.endingCorrections = "";
     }
 
     export() {
@@ -116,6 +117,7 @@ export class StrokeData {
 
     cubicSmoothEnding() {
         this.ending = "";
+        this.endingCorrections = "";
 
         const kstart = Math.max(0, this.points.length - smoothing - 1);
 
@@ -135,7 +137,7 @@ export class StrokeData {
                 before: { ...this.smoothPoints[k] },
                 after: { ...this.smoothPoints[k] },
             }
-            this.corrections += `M${coords(this.points[k])}L${coords(this.smoothPoints[k])}`;
+            this.endingCorrections += `M${coords(this.points[k])}L${coords(this.smoothPoints[k])}`;
 
             if (k > 1) {
                 // Compute controls for last point

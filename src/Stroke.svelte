@@ -17,46 +17,25 @@
     export let animation = { duration: 0 };
 
     let P = null;
-    let circleReg = null;
-    let quadReg = null;
-    let cubicReg = null;
+    let cubicRegPath = null;
 
     function mouseoverPointText(i) {
-        cubicRegText(i);
+        plotCubicReg(i);
     }
 
     const smoothing = 3;
 
-    function cubicRegText(i) {
+    function plotCubicReg(i) {
         P = stroke.smoothPoints[i];
         const { ax, bx, cx, dx, ay, by, cy, dy } = P;
-        cubicReg = "";
+        cubicRegPath = "";
         for (let t = -smoothing; t <= smoothing; t += 0.1) {
             const x = ax * t**3 + bx * t**2 + cx * t + dx;
             const y = ay * t**3 + by * t**2 + cy * t + dy;
-            cubicReg += (t === -smoothing ? "M" : "L") + `${x} ${y}`;
+            cubicRegPath += (t === -smoothing ? "M" : "L") + `${x} ${y}`;
         }
     }
-
-    function quadRegText(i) {
-        P = stroke.smoothPoints[i];
-        const { ax, bx, cx, ay, by, cy } = P;
-        quadReg = "";
-        for (let t = -10; t <= 10; t += 0.1) {
-            const x = ax * t**2 + bx * t + cx;
-            const y = ay * t**2 + by * t + cy;
-            quadReg += (t === - 10 ? "M" : "L") + `${x} ${y}`;
-        }
-    }
-
-    function circleRegText(i) {
-        P = stroke.points[i];
-        circleReg = stroke.circularSmoothing(i);
-        const dx = P.x - circleReg.a;
-        const dy = P.y - circleReg.b;
-        circleReg.r = Math.sqrt(dx * dx + dy * dy);
-    }
-
+    
 </script>
 
 <path
@@ -67,7 +46,7 @@
     name={"stroke-" + update}
     d={path}>
 </path>
-<!--->
+<!---->
 {#each stroke.points as P, i}
     <circle
         on:mouseover={() => mouseoverPointText(i)}
@@ -78,7 +57,7 @@
     ></circle>    
 {/each}
 <!---->
-<!--->
+<!---->
 <path
     d={stroke.controls}
     stroke="#000"
@@ -86,6 +65,11 @@
 ></path>
 <path
     d={stroke.corrections}
+    stroke="#F00"
+    stroke-width={0.2 * thickness}
+></path>
+<path
+    d={stroke.endingCorrections}
     stroke="#F00"
     stroke-width={0.2 * thickness}
 ></path>
@@ -130,7 +114,7 @@
     <path
         stroke="#00F"
         stroke-width={0.3 * thickness}
-        d={cubicReg}
+        d={cubicRegPath}
     ></path>
 {/if}
 <!---->
