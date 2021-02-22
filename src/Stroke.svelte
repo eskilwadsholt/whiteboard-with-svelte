@@ -19,9 +19,23 @@
     let P = null;
     let circleReg = null;
     let quadReg = null;
+    let cubicReg = null;
 
     function mouseoverPointText(i) {
-        quadRegText(i);
+        cubicRegText(i);
+    }
+
+    const smoothing = 3;
+
+    function cubicRegText(i) {
+        P = stroke.smoothPoints[i];
+        const { ax, bx, cx, dx, ay, by, cy, dy } = P;
+        cubicReg = "";
+        for (let t = -smoothing; t <= smoothing; t += 0.1) {
+            const x = ax * t**3 + bx * t**2 + cx * t + dx;
+            const y = ay * t**3 + by * t**2 + cy * t + dy;
+            cubicReg += (t === -smoothing ? "M" : "L") + `${x} ${y}`;
+        }
     }
 
     function quadRegText(i) {
@@ -53,14 +67,17 @@
     name={"stroke-" + update}
     d={path}>
 </path>
-{#each stroke.points as P}
+<!--->
+{#each stroke.points as P, i}
     <circle
+        on:mouseover={() => mouseoverPointText(i)}
         cx={P.x}
         cy={P.y}
-        r={0.2 * thickness}
-        fill="#000"
+        r={thickness}
+        fill="#0004"
     ></circle>    
 {/each}
+<!---->
 <!--->
 <path
     d={stroke.controls}
@@ -72,7 +89,7 @@
     stroke="#F00"
     stroke-width={0.2 * thickness}
 ></path>
-<!--->
+<!-->
 {#if P}
     <text x={P.x} y={P.y}
         font-size={2 * thickness + "px"}>
@@ -95,7 +112,7 @@
         >
     </circle>
 {/if}
-<!--->
+<!---->
 {#if P}
     <text x={P.x} y={P.y}
         font-size={2 * thickness + "px"}
@@ -113,7 +130,7 @@
     <path
         stroke="#00F"
         stroke-width={0.3 * thickness}
-        d={quadReg}
+        d={cubicReg}
     ></path>
 {/if}
 <!---->

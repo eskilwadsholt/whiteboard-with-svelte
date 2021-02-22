@@ -1,29 +1,72 @@
 <script>
     import Dot from "./Dot.svelte";
     import Stroke from "./Stroke.svelte";
+    
     export let dims = { left:0, top:0, width: 0, height: 0 };
     export let presenters = {};
-    $: strokes = $$props.strokes;
-    $: update = $$props.update;
+    export let strokes;
+    export let update;
+
     $: currentStroke = $$props.currentStroke;
+    
     const minStroke = 8; // Make at least 8 pixels long strokes
-    const outline = 10;
+    const outline = 10; // Thickness of border around shaded regions
+
+    const regions = [];
+    const patternWidth = 800;
+    const patternHeight = 600;
+    const patternReps = 4;
+    const majorPattern = 2;
+
+    let i = 0;
+    let shades = [ "#0002", "#0004" ];
+
+    for (let left = 0; left < patternReps; left++) {
+        for (let top = 0; top < patternReps; top++) {
+            i = (left + top) % shades.length;
+            const shade = shades[i];
+            regions.push({
+                left: left * patternWidth,
+                top: top * patternHeight,
+                width: patternWidth,
+                height: patternHeight,
+                shade: shade
+            });
+        }
+    }
+
+    shades = [ "#0000", "#0004" ];
+
+    for (let left = 0; left < patternReps / majorPattern; left++) {
+        for (let top = 0; top < patternReps / majorPattern; top++) {
+            i = (left + top) % shades.length;
+            const shade = shades[i];
+            regions.push({
+                left: left * patternWidth * majorPattern,
+                top: top * patternHeight * majorPattern,
+                width: patternWidth * majorPattern,
+                height: patternHeight * majorPattern,
+                shade: shade
+            });
+        }
+    }
+
 </script>
 
 <svg viewBox={`${dims.left} ${dims.top} ${dims.width} ${dims.height}`}>
     <rect x={-outline} y={-outline} class="outline"
-        width={3 * dims.screenWidth + 2 * outline + 1}
-        height={3 * dims.screenHeight + 2 * outline + 1}
+        width={patternReps * patternWidth + 2 * outline}
+        height={patternReps * patternHeight + 2 * outline}
         stroke-width={2 * outline}></rect>
-    <rect width={dims.screenWidth} height={dims.screenHeight}></rect>
-    <rect x={dims.screenWidth * 2}
-        width={dims.screenWidth} height={dims.screenHeight}></rect>
-    <rect x={dims.screenWidth} y={dims.screenHeight}
-        width={dims.screenWidth} height={dims.screenHeight}></rect>
-    <rect y={dims.screenHeight * 2}
-        width={dims.screenWidth} height={dims.screenHeight}></rect>
-    <rect x={dims.screenWidth * 2} y={dims.screenHeight * 2}
-        width={dims.screenWidth} height={dims.screenHeight}></rect>
+    {#each regions as region}
+        <rect
+            x={region.left}
+            y={region.top}
+            width={region.width}
+            height={region.height}
+            fill={region.shade}
+        ></rect>
+    {/each}
     {#each Object.keys(presenters) as presenter}
         <rect
             {update}
@@ -69,9 +112,6 @@
         left: 0;
         width: 100%;
         height: 100%;
-    }
-    rect {
-        fill: rgba(0, 0, 0, 0.1);
     }
     rect.outline {
         fill: none;

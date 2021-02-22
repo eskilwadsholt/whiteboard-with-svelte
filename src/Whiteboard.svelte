@@ -50,8 +50,16 @@
             return new StrokeData(ID++, color, linestyle.thickness * zoomFactor, linestyle.dash * zoomFactor);
         return new StrokeData(ID++, color, 4, 0);
     }
+
+    function calibratedFinger(P) {
+        return {
+            x: P.x - 15,
+            y: P.y - 5
+        }
+    }
     
     function addPoint(P) {
+        P = calibratedFinger(P);
         currentStroke.addPoint(screenToSVG(P));
         if (lastP) currentStroke.addPixelDist(lastP, P);
         lastP = P;

@@ -48,7 +48,7 @@
         left: 0;
         width: 100%;
         height: 60px;
-        background: #333;
+        background: #555;
         padding: 0 10px;
     }
 </style>
