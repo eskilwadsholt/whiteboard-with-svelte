@@ -4,11 +4,11 @@
     export let color;
 
     const linestyles = [
-        { id: 1, thickness: 2, dash: 0 },
-        { id: 0, thickness: 3, dash: 0 },
+        { id: 0, thickness: 2, dash: 0 },
+        { id: 1, thickness: 3, dash: 0 },
         { id: 2, thickness: 8, dash: 0 },
-        { id: 3, thickness: 2, dash: 8 },
-        { id: 4, thickness: 3, dash: 12 },
+        { id: 3, thickness: 2, dash: 6 },
+        { id: 4, thickness: 3, dash: 9 },
     ]
 
     export let selectedStyle = linestyles[0];

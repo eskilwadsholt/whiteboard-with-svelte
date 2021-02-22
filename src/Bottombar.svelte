@@ -50,5 +50,6 @@
         height: 60px;
         background: #555;
         padding: 0 10px;
+        cursor: context-menu;
     }
 </style>
