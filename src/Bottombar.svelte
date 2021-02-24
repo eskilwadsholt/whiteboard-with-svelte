@@ -2,6 +2,7 @@
     import Clear from "./Clear.svelte";
     import ColorPicker from "./ColorPicker.svelte";
     import LinestylePicker from "./LinestylePicker.svelte";
+import StylePicker from "./StylePicker.svelte";
     //import ThicknessPicker from "./ThicknessPicker.svelte";
     import Undo from "./Undo.svelte";
     export let selectedColor;
@@ -9,10 +10,8 @@
         e.preventDefault();
         e.stopPropagation();
     }
-    //export let thickness;
+
     export let linestyle;
-    let openSubMenus = {};
-    $: hide = openSubMenus.colorpicker || openSubMenus.linestylepicker;
 </script>
 
 <div class="bottombar"
@@ -23,19 +22,11 @@
     on:touchmove={stopEvent}
     on:touchend={stopEvent}
     >
-    <Undo {hide} on:undo/>
-    <ColorPicker {hide} bind:openMenus={openSubMenus} bind:selected={selectedColor}/>
-    <!--ThicknessPicker
-        {hide}
-        bind:openMenus={openSubMenus}
-        bind:thickness={thickness}
-        color={selectedColor}/-->
-    <LinestylePicker
-        {hide}
-        bind:openMenus={openSubMenus}
+    <Undo on:undo/>
+    <StylePicker
         bind:selectedStyle={linestyle}
-        color={selectedColor}/>
-    <Clear {hide} on:clear/>
+        bind:selectedColor={selectedColor}/>
+    <Clear on:clear/>
 </div>
 
 <style>

@@ -46,7 +46,7 @@
     name={"stroke-" + update}
     d={path}>
 </path>
-<!---->
+<!-->
 {#each stroke.points as P, i}
     <circle
         on:mouseover={() => mouseoverPointText(i)}
@@ -57,7 +57,7 @@
     ></circle>    
 {/each}
 <!---->
-<!---->
+<!--->
 <path
     d={stroke.controls}
     stroke="#000"
@@ -73,7 +73,7 @@
     stroke="#F00"
     stroke-width={0.2 * thickness}
 ></path>
-<!-->
+<!->
 {#if P}
     <text x={P.x} y={P.y}
         font-size={2 * thickness + "px"}>
@@ -96,7 +96,7 @@
         >
     </circle>
 {/if}
-<!---->
+<!->
 {#if P}
     <text x={P.x} y={P.y}
         font-size={2 * thickness + "px"}
