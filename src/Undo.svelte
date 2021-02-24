@@ -1,15 +1,16 @@
 <script>
     import { createEventDispatcher } from "svelte";
 
+    export let hide;
+
     const dispatch = createEventDispatcher();
 
     function handleClick() {
         dispatch("undo");
     }
-    export let hide;
 </script>
 
-<div class:hide class="undo" on:click={handleClick} on:touchstart={handleClick}>
+<div class="undo" on:click={handleClick} on:touchstart={handleClick}>
     Undo
 </div>
 
@@ -27,9 +28,5 @@
         box-shadow: 0 0 5px black;
         border-radius: 5px;
         height: 40px;
-    }
-    .hide {
-        position: absolute;
-        visibility: hidden;
     }
 </style>

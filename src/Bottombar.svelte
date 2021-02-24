@@ -1,17 +1,15 @@
 <script>
     import Clear from "./Clear.svelte";
-    import ColorPicker from "./ColorPicker.svelte";
-    import LinestylePicker from "./LinestylePicker.svelte";
-import StylePicker from "./StylePicker.svelte";
-    //import ThicknessPicker from "./ThicknessPicker.svelte";
+    import StylePicker from "./StylePicker.svelte";
     import Undo from "./Undo.svelte";
-    export let selectedColor;
+
+    export let selectedColor; // = { id: 3, name: "white", code: "#FFF" };
+    export let linestyle; // = { id: 0, thickness: 2, dash: 0 };
+
     function stopEvent(e) {
         e.preventDefault();
         e.stopPropagation();
     }
-
-    export let linestyle;
 </script>
 
 <div class="bottombar"

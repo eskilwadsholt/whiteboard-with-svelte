@@ -9,7 +9,7 @@
     export let hide;
 </script>
 
-<div class:hide class="clear" on:click={handleClick} on:touchstart={handleClick}>
+<div class="clear" on:click={handleClick} on:touchstart={handleClick}>
     Clear
 </div>
 
@@ -27,9 +27,5 @@
         box-shadow: 0 0 5px black;
         border-radius: 5px;
         height: 40px;
-    }
-    .hide {
-        position: absolute;
-        visibility: hidden;
     }
 </style>

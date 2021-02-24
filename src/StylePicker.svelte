@@ -17,7 +17,7 @@
         { id: 5, thickness: 3, dash: 9 },
     ]
 
-    export let selectedColor = colors[0];
+    export let selectedColor = colors[3];
     export let selectedStyle = linestyles[0];
 
     let open = false;
@@ -62,7 +62,7 @@ on:touchstart={toggleOpen}>
         {/each}
     </div>
     <div class="linestyles" class:open>
-        {#each linestyles as linestyle, i (linestyle.id)}
+        {#each linestyles as linestyle (linestyle.id)}
             <div
                 class:highlight={linestyle === selectedStyle}
                 on:click={() => selectStyle(linestyle.id)}
@@ -71,7 +71,7 @@ on:touchstart={toggleOpen}>
                 id={linestyle.id}>
                 <svg width="40px" height="40px">
                     <path
-                        stroke={selectedColor?.code}
+                        stroke={selectedColor.code}
                         stroke-width={linestyle.thickness}
                         stroke-dasharray={linestyle.dash}
                         d={pathData}
@@ -85,9 +85,9 @@ on:touchstart={toggleOpen}>
         on:touchstart={toggleOpen}>
         <svg width="40px" height="40px">
             <path
-                stroke={selectedColor?.code}
-                stroke-width={selectedStyle?.thickness}
-                stroke-dasharray={selectedStyle?.dash}
+                stroke={selectedColor.code}
+                stroke-width={selectedStyle.thickness}
+                stroke-dasharray={selectedStyle.dash}
                 d={pathData}
             ></path>
         </svg>
@@ -144,8 +144,12 @@ on:touchstart={toggleOpen}>
         width: 40px;
         height: 40px;
     }
+    .linestyle.highlight {
+        outline: 2px solid #000;
+        box-shadow: 0 0 5px #FFF;
+    }
     .color.highlight {
-        border: 2px solid black;
+        border: 2px solid #333;
         outline: 2px solid white;
     }
     .highlight svg {
