@@ -1,8 +1,6 @@
 <script>
     import { createEventDispatcher } from "svelte";
 
-    export let hide;
-
     const dispatch = createEventDispatcher();
 
     function handleClick() {

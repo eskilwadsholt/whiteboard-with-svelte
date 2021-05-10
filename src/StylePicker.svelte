@@ -13,8 +13,8 @@
         { id: 1, thickness: 3, dash: 0 },
         { id: 2, thickness: 5, dash: 0 },
         { id: 3, thickness: 8, dash: 0 },
-        { id: 4, thickness: 2, dash: 6 },
-        { id: 5, thickness: 3, dash: 9 },
+        { id: 4, thickness: 2, dash: 10 },
+        { id: 5, thickness: 3, dash: 15 },
     ]
 
     export let selectedColor = colors[3];
@@ -37,7 +37,7 @@
     const pathData = `
     M -5 25
     C 11 14 16 14.5 20 15
-    C 24 15.5 32 23 45 25
+    C 24 15.5 32 23 50 25
     `;
 </script>
 
@@ -111,19 +111,20 @@ on:touchstart={toggleOpen}>
     }
     .linestyles, .colors {
         position: absolute;
-        bottom: 5px;
+        bottom: 6px;
         width: 142px;
         display: flex;
         flex-wrap: wrap;
         background: #789;
-        padding: 5px;
+        padding: 4px;
+        border: 1px solid black;
         transform: scale(0);
         opacity: 0;
-        -webkit-transition: all 400ms ease-in-out;
-        -moz-transition: all 400ms ease-in-out;
-        -o-transition: all 400ms ease-in-out;
-        -ms-transition: all 400ms ease-in-out;
-        transition: all 400ms ease-in-out;
+        -webkit-transition: all 200ms ease-in-out;
+        -moz-transition: all 200ms ease-in-out;
+        -o-transition: all 200ms ease-in-out;
+        -ms-transition: all 200ms ease-in-out;
+        transition: all 200ms ease-in-out;
     }
     .linestyles {
         border-radius: 0 5px 5px 0;
@@ -145,8 +146,7 @@ on:touchstart={toggleOpen}>
         height: 40px;
     }
     .linestyle.highlight {
-        outline: 2px solid #000;
-        box-shadow: 0 0 5px #FFF;
+        outline: 2px solid white;
     }
     .color.highlight {
         border: 2px solid #333;
@@ -165,9 +165,10 @@ on:touchstart={toggleOpen}>
     svg {
         background: #BBB;
         border-radius: 5px;
-        border: 2px solid #888;
     }
     path {
         fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
     }
 </style>

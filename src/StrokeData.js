@@ -16,8 +16,8 @@ for (let t = - smoothing; t <= smoothing; t++) {
     St6 += t3[t] * t3[t];
 }
 const N = 2 * smoothing + 1;
-const S11 = St2;
-const S22 = St4 - St2 * St2 / N;
+//const S11 = St2;
+//const S22 = St4 - St2 * St2 / N;
 // Constantss for cubic smoothing
 const t6mean = St6 / N;
 const t4mean = St4 / N;
@@ -121,8 +121,6 @@ export class StrokeData {
 
         const kstart = Math.max(0, this.points.length - smoothing - 1);
 
-        let P1 = {}, P2 = {}, P3 = {};
-
         // Get cubic regs for last smooth point
         const { ax, bx, cx, dx, ay, by, cy, dy } = this.smoothPoints[kstart];
 
@@ -134,38 +132,28 @@ export class StrokeData {
                 y: ay * t**3 + by * t**2 + cy * t + dy,
             }
             this.smoothPoints[k].controls = {
-                before: { ...this.smoothPoints[k] },
-                after: { ...this.smoothPoints[k] },
+                before: { },
+                after: { },
             }
             this.endingCorrections += `M${coords(this.points[k])}L${coords(this.smoothPoints[k])}`;
 
             if (k > 1) {
-                // Compute controls for last point
-                P1 = this.smoothPoints[k - 2];
-                P2 = this.smoothPoints[k - 1];
-                P3 = this.smoothPoints[k];
-                // Compute vectors P2 --> P1 and P2 --> P3
-                const dx1 = P1.x - P2.x;
-                const dy1 = P1.y - P2.y;
-                const dx2 = P3.x - P2.x;
-                const dy2 = P3.y - P2.y;
-                // Compute tangent direction P1 --> P3
-                const dx = P3.x - P1.x;
-                const dy = P3.y - P1.y;
-                const squareNorm = dx * dx + dy * dy;
-                // Compute projections and save as controls
-                if (squareNorm > 0) {
-                    const before = catmulRomDist * (dx * dx1 + dy * dy1) / squareNorm;
-                    P2.controls.before.x = P2.x + dx * before;
-                    P2.controls.before.y = P2.y + dy * before;
-                    const after = catmulRomDist * (dx * dx2 + dy * dy2) / squareNorm;
-                    P2.controls.after.x = P2.x + dx * after;
-                    P2.controls.after.y = P2.y + dy * after;
+                const P = this.smoothPoints[k];
+
+                let dxdt = 3 * ax * t**2 + 2 * bx * t + cx;
+                let dydt = 3 * ay * t**2 + 2 * by * t + cy;
+
+                dxdt = catmulRomDist * dxdt;
+                dydt = catmulRomDist * dydt;
+
+                P.controls = {
+                    before: { x: P.x - dxdt, y: P.y - dydt },
+                    after: { x: P.x + dxdt, y: P.y + dydt },
                 }
-                this.ending += `C${coords(P1.controls.after)} ${coords(P2.controls.before)} ${coords(P2)}`;
+
+                this.ending += `S${coords(P.controls.before)} ${coords(P)}`;
             }
         }
-        if (P2.controls) this.ending += `Q${coords(P2.controls.after)} ${coords(P3)}`;
     }
 
     addPointCubicReg(P) {

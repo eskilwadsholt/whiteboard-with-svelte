@@ -6,7 +6,6 @@
     function handleClick() {
         dispatch("clear");
     }
-    export let hide;
 </script>
 
 <div class="clear" on:click={handleClick} on:touchstart={handleClick}>

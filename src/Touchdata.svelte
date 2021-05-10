@@ -1,5 +1,4 @@
 <script>
-    import { each } from "svelte/internal";
     export let touchData;
     $: touches = ("touches" in touchData) ? touchData.touches : [];
 </script>
