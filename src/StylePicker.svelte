@@ -1,24 +1,5 @@
 <script>
-    const colors = [
-        { id: 0, name: "red", code: "#F00" },
-        { id: 1, name: "green", code: "#0F0" },
-        { id: 2, name: "blue", code: "#00F" },
-        { id: 3, name: "white", code: "#FFF" },
-        { id: 4, name: "black", code: "#000" },
-        { id: 5, name: "yellow", code: "yellow" },
-    ]
-
-    const linestyles = [
-        { id: 0, thickness: 2, dash: 0 },
-        { id: 1, thickness: 3, dash: 0 },
-        { id: 2, thickness: 5, dash: 0 },
-        { id: 3, thickness: 8, dash: 0 },
-        { id: 4, thickness: 2, dash: 10 },
-        { id: 5, thickness: 3, dash: 15 },
-    ]
-
-    export let selectedColor = colors[3];
-    export let selectedStyle = linestyles[0];
+    import { line } from './settings';
 
     let open = false;
 
@@ -26,12 +7,12 @@
         open = !open;
     }
 
-    function selectColor(i) {
-        selectedColor = colors[i];
+    function selectColor(color) {
+        $line.color = color;
     }
 
-    function selectStyle(i) {
-        selectedStyle = linestyles[i];
+    function selectStyle(linestyle) {
+        $line.style = linestyle;
     }
 
     const pathData = `
@@ -49,11 +30,11 @@ on:touchstart={toggleOpen}>
 {/if}
 <div class="stylepicker">
     <div class="colors" class:open>
-        {#each colors as color (color.id)}
+        {#each $line.colors as color (color.id)}
             <div
-                class:highlight={color === selectedColor}
-                on:click={() => selectColor(color.id)}
-                on:touchstart={() => selectColor(color.id)}
+                class:highlight={color === $line.color}
+                on:click={() => selectColor(color)}
+                on:touchstart={() => selectColor(color)}
                 class:open
                 class="color"
                 id={color.name}
@@ -62,16 +43,16 @@ on:touchstart={toggleOpen}>
         {/each}
     </div>
     <div class="linestyles" class:open>
-        {#each linestyles as linestyle (linestyle.id)}
+        {#each $line.styles as linestyle (linestyle.id)}
             <div
-                class:highlight={linestyle === selectedStyle}
-                on:click={() => selectStyle(linestyle.id)}
-                on:touchstart={() => selectStyle(linestyle.id)}
+                class:highlight={linestyle === $line.style}
+                on:click={() => selectStyle(linestyle)}
+                on:touchstart={() => selectStyle(linestyle)}
                 class="linestyle"
                 id={linestyle.id}>
                 <svg width="40px" height="40px">
                     <path
-                        stroke={selectedColor.code}
+                        stroke={$line.color.code}
                         stroke-width={linestyle.thickness}
                         stroke-dasharray={linestyle.dash}
                         d={pathData}
@@ -85,9 +66,9 @@ on:touchstart={toggleOpen}>
         on:touchstart={toggleOpen}>
         <svg width="40px" height="40px">
             <path
-                stroke={selectedColor.code}
-                stroke-width={selectedStyle.thickness}
-                stroke-dasharray={selectedStyle.dash}
+                stroke={$line.color.code}
+                stroke-width={$line.style.thickness}
+                stroke-dasharray={$line.style.dash}
                 d={pathData}
             ></path>
         </svg>

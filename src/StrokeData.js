@@ -16,8 +16,7 @@ for (let t = - smoothing; t <= smoothing; t++) {
     St6 += t3[t] * t3[t];
 }
 const N = 2 * smoothing + 1;
-//const S11 = St2;
-//const S22 = St4 - St2 * St2 / N;
+
 // Constantss for cubic smoothing
 const t6mean = St6 / N;
 const t4mean = St4 / N;
@@ -54,8 +53,6 @@ export class StrokeData {
     }
 
     export() {
-        //const { pixelDist, thickness, dash, color, firstPoint, first, middle, ending} = this;
-        //return { pixelDist, thickness, dash, color, firstPoint, first, middle, ending};
         const { totalTime, processTime } = this;
         const ratio = totalTime / processTime;
         console.debug({ totalTime, processTime, ratio });
@@ -125,7 +122,6 @@ export class StrokeData {
         const { ax, bx, cx, dx, ay, by, cy, dy } = this.smoothPoints[kstart];
 
         for (let k = kstart + 1; k < this.points.length; k++) {
-            // this.smoothPoints[k] = this.cubicReg(k);
             const t = k - kstart;
             this.smoothPoints[k] = {
                 x: ax * t**3 + bx * t**2 + cx * t + dx,
@@ -223,13 +219,6 @@ function coords(P) {
 export function clamp(val, min, max) {
     if (val < min) return min;
     if (val > max) return max;
-    return val;
-}
-
-function wrap(val, min, max) {
-    if (min >= max) return min;
-    if (val < min) return wrap(2 * min - val, min, max);
-    if (val > max) return wrap(2 * max - val, min, max);
     return val;
 }
 

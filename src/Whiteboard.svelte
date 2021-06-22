@@ -2,14 +2,12 @@
     import { onMount } from 'svelte';
     import { StrokeData, dist, clamp } from "./StrokeData";
     import Bottombar from "./Bottombar.svelte";
-    import Mousedata from "./Mousedata.svelte";
     import Svg from "./Svg.svelte";
-    import Touchdata from "./Touchdata.svelte";
+    import { line } from './settings';
 
     const updateFrequency = NaN; // Milliseconds between server requests
     let color;
     let linestyle;
-    const debugging = false;
     let mouseData = {};
     let touchData = {};
     // Alternative to observable array
@@ -38,17 +36,21 @@
     //$: console.debug(linestyle);
 
     $: {
-        currentStroke.color = color;
+        currentStroke.color = $line.color;
         // TODO: refactor so that zoomFactor is applied when drawing instead
-        currentStroke.thickness = linestyle ? linestyle.thickness * zoomFactor : 4;
-        currentStroke.dash = linestyle ? linestyle.dash * zoomFactor : 0;
+        currentStroke.thickness = $line.style ? $line.style.thickness * zoomFactor : 4;
+        currentStroke.dash = $line.style ? $line.style.dash * zoomFactor : 0;
     }
 
     function createNewStroke() {
         lastP = null;
-        if (linestyle)
-            return new StrokeData(ID++, color, linestyle.thickness * zoomFactor, linestyle.dash * zoomFactor);
-        return new StrokeData(ID++, color, 4, 0);
+        if ($line.style)
+            return new StrokeData(
+                ID++, 
+                $line.color, 
+                $line.style.thickness * zoomFactor, 
+                $line.style.dash * zoomFactor);
+        return new StrokeData(ID++, $line.color, 4, 0);
     }
 
     function calibratedFinger(P) {
@@ -346,12 +348,7 @@
     on:mouseup={handleMouseup}
     on:wheel={handleWheel}
 >
-{#if debugging}
-    {#if leftMouseIsDown}
-    <Mousedata {mouseData}></Mousedata>
-    {/if}
-    <Touchdata {touchData}></Touchdata>
-{/if}
+
 <Svg {presenters} {strokes} {update} {currentStroke} {dims}></Svg>
 <Bottombar 
     bind:selectedColor={color}

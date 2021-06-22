@@ -3,7 +3,7 @@
     import StylePicker from "./StylePicker.svelte";
     import Undo from "./Undo.svelte";
 
-    export let selectedColor; // = { id: 3, name: "white", code: "#FFF" };
+    //export let selectedColor; // = { id: 3, name: "white", code: "#FFF" };
     export let linestyle; // = { id: 0, thickness: 2, dash: 0 };
 
     function stopEvent(e) {
@@ -22,8 +22,7 @@
     >
     <Undo on:undo/>
     <StylePicker
-        bind:selectedStyle={linestyle}
-        bind:selectedColor={selectedColor}/>
+        bind:selectedStyle={linestyle}/>
     <Clear on:clear/>
 </div>
 
