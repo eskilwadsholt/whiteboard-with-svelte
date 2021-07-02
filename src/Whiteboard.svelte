@@ -1,26 +1,17 @@
 <script>
     import { onMount } from 'svelte';
-    import { StrokeData, dist, clamp } from "./StrokeData";
+    import { dist, clamp } from "./models/strokeData";
     import Bottombar from "./Bottombar.svelte";
     import Svg from "./Svg.svelte";
-    import { line } from './settings';
+    import { strokes } from './stores/boardData';
+    import { view } from './stores/view';
 
     const updateFrequency = NaN; // Milliseconds between server requests
-    let color;
-    let linestyle;
-    let mouseData = {};
-    let touchData = {};
-    // Alternative to observable array
-    let update = 0; // When stroke array is updated
-    let strokes = [];
 
     let presenters = { };
     let boardID = new Date();
-    let ID = 0;
     let zoomFactor = 1;
-    let lastP = null;
 
-    let currentStroke = createNewStroke();
     let leftMouseIsDown = false;
     let rightMouseIsDown = false;
     let touchIsDown = false;
@@ -33,26 +24,6 @@
     let latestChangeTimestamp = new Date();
     let changes = 0;
 
-    //$: console.debug(linestyle);
-
-    $: {
-        currentStroke.color = $line.color;
-        // TODO: refactor so that zoomFactor is applied when drawing instead
-        currentStroke.thickness = $line.style ? $line.style.thickness * zoomFactor : 4;
-        currentStroke.dash = $line.style ? $line.style.dash * zoomFactor : 0;
-    }
-
-    function createNewStroke() {
-        lastP = null;
-        if ($line.style)
-            return new StrokeData(
-                ID++, 
-                $line.color, 
-                $line.style.thickness * zoomFactor, 
-                $line.style.dash * zoomFactor);
-        return new StrokeData(ID++, $line.color, 4, 0);
-    }
-
     function calibratedFinger(P) {
         return {
             x: P.x - 20,
@@ -61,17 +32,14 @@
     }
     
     function addPoint(P) {
-        currentStroke.addPoint(screenToSVG(P));
-        if (lastP) currentStroke.addPixelDist(lastP, P);
-        lastP = P;
-        update++;
+        $strokes.current.addPixelDistTo(P);
+        $strokes.addPoint(screenToSVG(P));
     }
 
-    function recordStroke() {
-        if (currentStroke.points.length) {
-            strokes.push(currentStroke.export());
-            currentStroke = createNewStroke();
-            update++;
+    function recordStroke(data) {
+        console.debug(data);
+        if (data.points.length) {
+            $strokes.add(data);
             latestChangeTimestamp = new Date();
             changes++;
         }
@@ -80,13 +48,11 @@
     // Detect mouse and touch events
     function handleTouchStart(e) {
         e.preventDefault();
-        touchData = e;
         if (e.touches.length === 1) {
             touchIsDown = true;
             recordTouch(e);
         } else if (e.touches.length === 2) {
             touchIsDown = false;
-            currentStroke = createNewStroke();
             const touch = e.touches[0];
             const P = { x: touch.clientX, y: touch.clientY };
             const touch2 = e.touches[1];
@@ -120,15 +86,14 @@
 
     function handleTouchmove(e) {
         e.preventDefault();
-        touchData = e;
         recordTouch(e);
     }
 
     function handleTouchend(e) {
         e.preventDefault();
-        touchData = {};
-        if (currentStroke.points.length && touchIsDown) recordStroke();
-        currentStroke = createNewStroke();
+        if ($strokes.current.points.length && touchIsDown) recordStroke($strokes.current.export());
+        $strokes.new();
+        console.debug($strokes);
         latestChangeTimestamp = new Date();
         touchIsDown = false;
     }
@@ -140,17 +105,15 @@
 
     function handleMousedown(e) {
         e.preventDefault();
-        mouseData = e;
         leftMouseIsDown = e.button === 0;
         rightMouseIsDown = e.button === 2;
-        if (mouseData.button === 0) mouseData.mousedown = true;
+        if (e.button === 0) e.mousedown = true;
         if (leftMouseIsDown) recordLeftMouse(e);
         e.stopPropagation();
     }
 
     function handleMousemove(e) {
         e.preventDefault();
-        mouseData = e;
         if (leftMouseIsDown) recordLeftMouse(e);
         if (rightMouseIsDown) {
             // TODO: movementX and movementY are clunky - use mouseDownPoint as reference instead
@@ -166,9 +129,8 @@
         e.preventDefault();
         leftMouseIsDown = false;
         rightMouseIsDown = false;
-        mouseData = {};
-        mouseData.mousedown = false;
-        if (currentStroke.points.length) recordStroke();
+        if ($strokes.current.points.length) recordStroke($strokes.current.export());
+        $strokes.new();
         latestChangeTimestamp = new Date();
     }
 
@@ -187,30 +149,28 @@
     }
 
     function handleClear() {
-        strokes = [];
-        update++;
+        $strokes.clear();
+        console.debug(`Cleared list: ${$strokes.list}`);
         boardID = new Date();
         latestChangeTimestamp = new Date();
         changes++;
     }
 
     function handleUndo() {
-        strokes.pop();
-        update++;
+        $strokes.pop();
         latestChangeTimestamp = new Date();
         changes++;
     }
 
     function screenToSVG(P) {
         return {
-            x: dims.left + P.x / width * dims.width,
-            y: dims.top + P.y / height * dims.height,
+            x: $view.left + P.x / width * $view.width,
+            y: $view.top + P.y / height * $view.height,
         }
     }
 
     let width = 0, height = 0;
-    //$: console.debug(width + "x" + height);
-    $: dims = {
+    $: $view = {
         ...svgTopLeft,
         width: width * zoomFactor,
         height: height * zoomFactor,
@@ -237,8 +197,8 @@
             body: JSON.stringify({ 
                 _id: boardID,
                 _timestamp: newTimestamp,
-                strokes,
-                dims,
+                strokes: $strokes.list,
+                $view,
             }),
         });
         
@@ -302,10 +262,7 @@
             if (!(presenter in latestUpdates)) removeThose.push(presenter);
         });
 
-
         removeThose.forEach(presenter => delete presenters[presenter]);
-
-        if (removeThose.length > 0) update++;
     }
 
     if (updateFrequency) setInterval(checkForUpdates, updateFrequency);
@@ -331,7 +288,6 @@
         if ("strokes" in json) {
             presenters[userDetails.presenter] = { name: userDetails.name,  ...json};
         }
-        update++;
     }
 
     onMount(postBoard);
@@ -349,10 +305,8 @@
     on:wheel={handleWheel}
 >
 
-<Svg {presenters} {strokes} {update} {currentStroke} {dims}></Svg>
+<Svg {presenters} strokes={$strokes.list} current={$strokes.current} dims={$view}></Svg>
 <Bottombar 
-    bind:selectedColor={color}
-    bind:linestyle={linestyle}
     on:clear={handleClear}
     on:undo={handleUndo}/>
 </div>
