@@ -5,9 +5,7 @@
     export let dims = { left:0, top:0, width: 0, height: 0 };
     export let presenters = {};
     export let strokes;
-    export let update;
-
-    $: currentStroke = $$props.currentStroke;
+    export let current;
     
     const minStroke = 8; // Make at least 8 pixels long strokes
     const outline = 10; // Thickness of border around shaded regions
@@ -69,7 +67,6 @@
     {/each}
     {#each Object.keys(presenters) as presenter}
         <rect
-            {update}
             class="presenter-viewbox"
             x={presenters[presenter].dims.left}
             y={presenters[presenter].dims.top}
@@ -78,7 +75,6 @@
             stroke-width={dims.zoom}
             stroke-dasharray={10 * dims.zoom}></rect>
         <text
-            {update}
             class="presenter-viewbox"
             x={presenters[presenter].dims.left + presenters[presenter].dims.width / 2}
             y={presenters[presenter].dims.top + 2 * dims.zoom}
@@ -87,21 +83,21 @@
     {#each Object.keys(presenters) as presenter}
         {#each presenters[presenter].strokes as stroke}
             {#if stroke.pixelDist > minStroke}
-            <Stroke animation={{ speed: 1 }} {stroke} {update}></Stroke>
+            <Stroke animation={{ speed: 1 }} {stroke}></Stroke>
             {:else}
-            <Dot {stroke} {update}></Dot>
+            <Dot {stroke}></Dot>
             {/if}
         {/each}
     {/each}
     {#each strokes as stroke}
         {#if stroke.pixelDist > minStroke}
-        <Stroke {stroke} {update}></Stroke>
+        <Stroke {stroke}></Stroke>
         {:else}
-        <Dot {stroke} {update}></Dot>
+        <Dot {stroke}></Dot>
         {/if}
     {/each}
-    {#if currentStroke.points.length}
-    <Stroke stroke={currentStroke} update="current"></Stroke>
+    {#if current.points.length}
+    <Stroke stroke={current}></Stroke>
     {/if}
 </svg>
 

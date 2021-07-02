@@ -5,11 +5,9 @@
     $: if ($$props.stroke.color) {
         color = $$props.stroke.color.code;
     }
-    let update = $$props.update;
 </script>
 
 <circle
-    name={"dot-" + update}
     cx={point.x}
     cy={point.y}
     r={thickness}

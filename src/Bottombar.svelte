@@ -3,9 +3,6 @@
     import StylePicker from "./StylePicker.svelte";
     import Undo from "./Undo.svelte";
 
-    //export let selectedColor; // = { id: 3, name: "white", code: "#FFF" };
-    export let linestyle; // = { id: 0, thickness: 2, dash: 0 };
-
     function stopEvent(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -20,10 +17,9 @@
     on:touchmove={stopEvent}
     on:touchend={stopEvent}
     >
-    <Undo on:undo/>
-    <StylePicker
-        bind:selectedStyle={linestyle}/>
-    <Clear on:clear/>
+    <Undo on:undo />
+    <StylePicker />
+    <Clear on:clear />
 </div>
 
 <style>

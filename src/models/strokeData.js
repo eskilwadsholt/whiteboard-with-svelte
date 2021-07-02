@@ -1,4 +1,4 @@
-// Number of neighbours to each side of point to make quadreg to smooth
+// Number of neighbours to each side of point to make cubicreg to smooth
 const smoothing = 3;
 const catmulRomDist = 1 / 3;
 
@@ -34,9 +34,9 @@ export class StrokeData {
         this.pixelDist = 0; // In screen pixels at time of 
         this.firstPoint = null;
         this.lastP = null;
-        this.cubicSmoothPoint = null; // Middle of middles (cubic Bezier)
         this.points = [];
         this.smoothPoints = [];
+        this.lastScreenP = null;
 
         // Timers
         this.startTime = performance.now();
@@ -59,8 +59,9 @@ export class StrokeData {
         return this;
     }
 
-    addPixelDist(P, Q) {
-        this.pixelDist += dist(P, Q);
+    addPixelDistTo(screenP) {
+        if (this.lastScreenP) this.pixelDist += dist(this.lastScreenP, screenP);
+        this.lastScreenP = screenP;
     }
 
     cubicReg(k) {
@@ -109,7 +110,8 @@ export class StrokeData {
         return {
             ...P,
             ...{ ax, bx, cx, dx, ay, by, cy, dy },
-            controls: { before: { ...P }, after: { ...P} } };
+            controls: { before: { ...P }, after: { ...P} },
+        };
     }
 
     cubicSmoothEnding() {
@@ -165,7 +167,7 @@ export class StrokeData {
 
         this.points.push({
             ...newP,
-            controls: { before: { ...newP }, after: { ...newP } } 
+            controls: { before: { ...newP }, after: { ...newP } },
         });
         
         const kstart = Math.max(0, this.points.length - smoothing - 1);

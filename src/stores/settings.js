@@ -22,6 +22,6 @@ export const line = writable({
     colors,
     styles,
     color: colors[3],
-    style: styles[0],
+    style: styles[1],
 })
 

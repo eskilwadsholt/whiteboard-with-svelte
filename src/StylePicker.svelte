@@ -1,5 +1,5 @@
 <script>
-    import { line } from './settings';
+    import { line } from './stores/settings';
 
     let open = false;
 
